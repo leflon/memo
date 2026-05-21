@@ -1,15 +1,19 @@
 {
-  "name": "memo",
-  "version": "1.0.50",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
-  },
-  "dependencies": {
-    "elysia": "latest"
-  },
-  "devDependencies": {
-    "bun-types": "latest"
-  },
-  "module": "src/index.js"
+	"name": "memo",
+	"version": "1.0.50",
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"dev": "bun run --watch src/index.ts",
+		"create-api-key": "bun run scripts/create-api-key.ts",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"dependencies": {
+		"elysia": "latest"
+	},
+	"devDependencies": {
+		"bun-types": "latest",
+		"prettier": "^3.8.3"
+	},
+	"module": "src/index.js"
 }

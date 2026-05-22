@@ -20,52 +20,69 @@ interface Card {
 }
 
 export const cardsRoutes = new Elysia({ prefix: '/cards' })
-  .get('/', () => {
-    return db.query<Card, []>('SELECT * FROM Cards').all();
-  })
+	.get('/', () => {
+		return db.query<Card, []>('SELECT * FROM Cards').all();
+	})
 
-  .get('/collection/:collectionId', ({ params, set }) => {
-    const cards = db
-      .query<Card, [string]>('SELECT * FROM Cards WHERE collection_id = ?')
-      .all(params.collectionId);
+	.get(
+		'/random',
+		({ query }) => {
+			if (query.collection)
+				return db
+					.query<
+						Card,
+						[string]
+					>('SELECT * FROM Cards WHERE collection_id = ? ORDER BY RANDOM() LIMIT 1;')
+					.get(query.collection);
+			else return db.query<Card, []>('SELECT * FROM Cards ORDER BY RANDOM() LIMIT 1;').get();
+		},
+		{
+			query: t.Object({ collection: t.Optional(t.String()) }),
+		},
+	)
 
-    if (!cards.length) {
-      return [];
-    }
+	.get('/collection/:collectionId', ({ params, set }) => {
+		const cards = db
+			.query<Card, [string]>('SELECT * FROM Cards WHERE collection_id = ?')
+			.all(params.collectionId);
 
-    return cards;
-  })
+		if (!cards.length) {
+			return [];
+		}
 
-  .get('/:id', ({ params, set }) => {
-    const card = db.query<Card, [string]>('SELECT * FROM Cards WHERE id = ?').get(params.id);
+		return cards;
+	})
 
-    if (!card) {
-      set.status = 404;
-      return { error: 'Card not found' };
-    }
+	.get('/:id', ({ params, set }) => {
+		const card = db.query<Card, [string]>('SELECT * FROM Cards WHERE id = ?').get(params.id);
 
-    return card;
-  })
+		if (!card) {
+			set.status = 404;
+			return { error: 'Card not found' };
+		}
 
-  .post(
-    '/',
-    ({ body, set }) => {
-      const id = crypto.randomUUID();
-      const collection_id = resolveCollectionId(body.collection_id ?? null);
-      db.query(
-        'INSERT INTO Cards (id, front_text, back_text, collection_id) VALUES (?, ?, ?, ?)',
-      ).run(id, body.front_text, body.back_text, collection_id);
-      set.status = 201;
-      return db.query<Card, [string]>('SELECT * FROM Cards WHERE id = ?').get(id);
-    },
-    {
-      body: t.Object({
-        front_text: t.String({ minLength: 1 }),
-        back_text: t.String({ minLength: 1 }),
-        collection_id: t.Optional(t.String()),
-      }),
-    },
-  )
+		return card;
+	})
+
+	.post(
+		'/',
+		({ body, set }) => {
+			const id = crypto.randomUUID();
+			const collection_id = resolveCollectionId(body.collection_id ?? null);
+			db.query(
+				'INSERT INTO Cards (id, front_text, back_text, collection_id) VALUES (?, ?, ?, ?)',
+			).run(id, body.front_text, body.back_text, collection_id);
+			set.status = 201;
+			return db.query<Card, [string]>('SELECT * FROM Cards WHERE id = ?').get(id);
+		},
+		{
+			body: t.Object({
+				front_text: t.String({ minLength: 1 }),
+				back_text: t.String({ minLength: 1 }),
+				collection_id: t.Optional(t.String()),
+			}),
+		},
+	)
 	.patch(
 		'/:id',
 		({ params, body, set }) => {
